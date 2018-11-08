@@ -26,8 +26,8 @@ class PlanetPropertiesGenerator():
         
         #proba[idsS] = np.random.uniform(0.25, 10, size=len(idsS[0]))
         #proba[idsL] = np.random.uniform(10, 30, size=len(idsL[0]))
-        proba[idsS] = np.random.uniform(0.25, 5, size=len(idsS[0]))#This is the easy version
-        proba[idsL] = np.random.uniform(5, 20, size=len(idsL[0]))#This is the easy version
+        proba[idsS] = np.random.uniform(0.25, 2, size=len(idsS[0]))#This is the easy version
+        proba[idsL] = np.random.uniform(2, 10, size=len(idsL[0]))#This is the easy version
         
         return proba
     
@@ -50,7 +50,8 @@ class PlanetPropertiesGenerator():
         return np.random.uniform(0., 0.6, size=size)
     
     def eccentricity(self, size=1):
-        return np.random.lognormal(mean=1e-3, sigma=1.2, size=size) / 650.
+        return np.zeros(size)
+        #return np.random.lognormal(mean=1e-3, sigma=1.2, size=size) / 650.
         """
         print(np.amin(prop), np.mean(prop), np.amax(prop))
         plt.figure()
@@ -62,7 +63,8 @@ class PlanetPropertiesGenerator():
         """
         
     def lonPeriastron(self, size=1):
-        return np.random.uniform(low=0, high=180, size=size)
+        return 90. * np.ones(size)
+        #return np.random.uniform(low=0, high=180, size=size)
 
 def generateFakeData(ntransits, nnontransit, sigmaPhoton, saveDir="data/fake/"):
     """

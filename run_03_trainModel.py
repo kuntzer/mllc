@@ -29,7 +29,7 @@ print(trainFeatures.shape)
 
 
 # Let's define the model, the input shape is directly derived from the trainFeatures
-modelFct = models.RNNOnly
+modelFct = models.convNetLSTM
 modelName = modelFct.__name__
 logging.info("Model name is selected to be: {}".format(modelName))
 modelDir = os.path.join("runs", runName, modelName)
