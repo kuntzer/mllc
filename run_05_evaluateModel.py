@@ -9,8 +9,8 @@ import tmllc
 import logging
 logging.basicConfig(format='%(asctime)s %(levelname)s: %(name)s(%(funcName)s): %(message)s', level=logging.DEBUG)
 
-runName = "fakeDataLarge"
-modelName = "convNetRNN"
+runName = "fakeWideParams"
+modelName = "LSTMOnly"
 runDir = os.path.join("runs", runName, modelName)
 saveDirDiag = os.path.join(runDir, "diagnostics")
 saveDirData = os.path.join("runs", runName, "data")

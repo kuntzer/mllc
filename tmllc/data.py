@@ -3,6 +3,7 @@ import numpy as np
 import batman
 from astropy.table import Table
 from datetime import datetime
+import pylab as plt
 
 from . import io
 
@@ -25,8 +26,8 @@ class PlanetPropertiesGenerator():
         
         #proba[idsS] = np.random.uniform(0.25, 10, size=len(idsS[0]))
         #proba[idsL] = np.random.uniform(10, 30, size=len(idsL[0]))
-        proba[idsS] = np.random.uniform(0.25, 2, size=len(idsS[0]))#This is the easy version
-        proba[idsL] = np.random.uniform(2, 5, size=len(idsL[0]))#This is the easy version
+        proba[idsS] = np.random.uniform(0.25, 5, size=len(idsS[0]))#This is the easy version
+        proba[idsL] = np.random.uniform(5, 20, size=len(idsL[0]))#This is the easy version
         
         return proba
     
@@ -47,6 +48,21 @@ class PlanetPropertiesGenerator():
     def darkLimbCoeff(self, size=1):
         
         return np.random.uniform(0., 0.6, size=size)
+    
+    def eccentricity(self, size=1):
+        return np.random.lognormal(mean=1e-3, sigma=1.2, size=size) / 650.
+        """
+        print(np.amin(prop), np.mean(prop), np.amax(prop))
+        plt.figure()
+        
+        bins = np.logspace(-6,0, 50)
+        plt.hist(prop, bins=bins, log=True)
+        plt.xscale('log')
+        plt.show()
+        """
+        
+    def lonPeriastron(self, size=1):
+        return np.random.uniform(low=0, high=180, size=size)
 
 def generateFakeData(ntransits, nnontransit, sigmaPhoton, saveDir="data/fake/"):
     """
@@ -58,6 +74,7 @@ def generateFakeData(ntransits, nnontransit, sigmaPhoton, saveDir="data/fake/"):
     timeStart = datetime.now()
     
     prop = PlanetPropertiesGenerator()
+    
     Nexp = 20610
     #Nexp = 1000
     paramsTruths = []
@@ -82,8 +99,8 @@ def generateFakeData(ntransits, nnontransit, sigmaPhoton, saveDir="data/fake/"):
         params.t0 = np.random.uniform(0, 14.)#time of inferior conjunction
         params.a = prop.aOverRstar()                        #semi-major axis (in units of stellar radii)
         params.inc = prop.inc()                      #orbital inclination (in degrees)
-        params.ecc = 0.                       #eccentricity
-        params.w = 90.                        #longitude of periastron (in degrees)
+        params.ecc = prop.eccentricity()                       #eccentricity
+        params.w = prop.lonPeriastron()                       #longitude of periastron (in degrees)
         params.limb_dark = "quadratic"        #limb darkening model
         params.u = [prop.darkLimbCoeff(), prop.darkLimbCoeff()]      #limb darkening coefficients
         

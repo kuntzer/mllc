@@ -9,7 +9,7 @@ import tmllc
 
 logging.basicConfig(format='%(asctime)s %(levelname)s: %(name)s(%(funcName)s): %(message)s', level=logging.INFO)
 
-runName = "fakeDataLarge"
+runName = "fakeWideParams"
 saveDirDiag = os.path.join("runs", runName, "comparison")
 figSave = True
 figShow = True

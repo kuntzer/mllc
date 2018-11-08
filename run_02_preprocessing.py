@@ -9,8 +9,8 @@ import tmllc
 logging.basicConfig(format='%(asctime)s %(levelname)s: %(name)s(%(funcName)s): %(message)s', level=logging.INFO)
 
 useFakeData = True
-fakeDataDir = "data/fakeLarge"
-runName = "fakeDataLarge"
+fakeDataDir = "data/fakeWideParams"
+runName = "fakeWideParams"
 saveDir = os.path.join("runs", runName)
 
 # Beware the results are not reproducible since we select always a different subset, so let's fix the numpy seed

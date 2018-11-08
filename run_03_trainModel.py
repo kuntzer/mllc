@@ -9,7 +9,7 @@ import models
 
 logging.basicConfig(format='%(asctime)s %(levelname)s: %(name)s(%(funcName)s): %(message)s', level=logging.INFO)
 
-runName = "fakeDataLarge"
+runName = "fakeWideParams"
 
 
 saveDir = os.path.join("runs", runName)
@@ -43,7 +43,7 @@ model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy']
 print(model.summary())
 
 batch_size = 128
-fitHistory = model.fit(trainFeatures, trainLabels, validation_data=(validFeatures, validLabels), epochs=10, batch_size=batch_size)
+fitHistory = model.fit(trainFeatures, trainLabels, validation_data=(validFeatures, validLabels), epochs=7, batch_size=batch_size)
 
 logging.info("Training the model took {}".format(datetime.now()-timeStart))
 

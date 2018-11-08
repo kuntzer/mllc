@@ -10,8 +10,9 @@ import tmllc
 
 logging.basicConfig(format='%(asctime)s %(levelname)s: %(name)s(%(funcName)s): %(message)s', level=logging.INFO)
 
-runName = "fakeDataLarge"
-modelName = "LSTMOnly"
+runName = "fakeWideParams"
+modelName = "convNetRNN"
+modelName = "RNNOnly"
 metricFunction = metrics.accuracy_score
 metric = metricFunction.__name__
 dataDir = os.path.join("runs", runName, "data")
