@@ -69,7 +69,7 @@ class PlanetPropertiesGenerator():
         #return 90. * np.ones(size)
         return np.random.uniform(low=0, high=180, size=size)
 
-def generateFakeData(ntransits, nnontransit, sigmaPhoton, saveDir="data/fake/", maxDataPerFile=1024):
+def generateFakeData(ntransits, nnontransit, sigmaPhoton, saveDir="data/fake/", maxDataPerFile=16):
     """
     This generates noisy transits and another series of data, which are then saved to 3 files: 
     """

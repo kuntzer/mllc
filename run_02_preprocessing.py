@@ -17,10 +17,10 @@ def preprocessNonParametric(data):
 
 logging.basicConfig(format='%(asctime)s %(levelname)s: %(name)s(%(funcName)s): %(message)s', level=logging.INFO)
 
-fakeDataDir = "data/fakeWideParams"
-runName = "fakeWideParams"
+fakeDataDir = "data/fakeWideParamsL_smallFiles"
+runName = "fakeWideParamsL_smallFiles"
 saveDir = os.path.join("runs", runName)
-maxDataPerFile = 200
+maxDataPerFile = 1024
 # This, is set to True, will reorder the dataset per file number. It will require less I/O operation
 # but assume there is no order in the data.
 allowOrderPerFile = False 
