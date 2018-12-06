@@ -10,7 +10,7 @@ import logging
 logging.basicConfig(format='%(asctime)s %(levelname)s: %(name)s(%(funcName)s): %(message)s', level=logging.DEBUG)
 
 runName = "fakeWideParams"
-modelName = "LSTMOnly"
+modelName = "convNetLSTM"
 runDir = os.path.join("runs", runName, modelName)
 saveDirDiag = os.path.join(runDir, "diagnostics")
 saveDirData = os.path.join("runs", runName, "data")
@@ -18,7 +18,7 @@ saveDirData = os.path.join("runs", runName, "data")
 falsePositiveQQPlot = False
 filtersCompute = False
 figSave = True
-figShow = False
+figShow = True
 
 threshold = tmllc.io.jsonRead(os.path.join(runDir, "threshold.json"))
 threshold = threshold['threshold']

@@ -1,17 +1,17 @@
 import keras.models as kmodels
 import keras.layers as klayers
 
-def LSTMOnly(trainFeatures):
+def LSTMOnly(dimFeature):
     
     # LSTM model
     model = kmodels.Sequential()
-    model.add(klayers.LSTM(100, input_shape=(1, trainFeatures.shape[2]), dropout=0.2, recurrent_dropout=0.2))
+    model.add(klayers.LSTM(100, input_shape=(1, dimFeature), dropout=0.2, recurrent_dropout=0.2))
     model.add(klayers.Dense(100, activation='relu'))
     model.add(klayers.Dense(1, activation='sigmoid'))
 
     return model
 
-def convNetLSTM(trainFeatures):
+def convNetLSTM(dimFeature):
     
     # Convnet model
     filters = 16
@@ -30,7 +30,8 @@ def convNetLSTM(trainFeatures):
     ))
     """
     model = kmodels.Sequential()
-    model.add(klayers.Conv1D(filters=filters, kernel_size=kernel_size, activation='relu', input_shape=(1, trainFeatures.shape[2]), data_format="channels_first"))
+    #model.add(klayers.Conv1D(filters=filters, kernel_size=kernel_size, activation='relu', input_shape=(1, trainFeatures.shape[2]), data_format="channels_first"))
+    model.add(klayers.Conv1D(filters=filters, kernel_size=kernel_size, activation='relu', input_shape=(1, dimFeature), data_format="channels_first"))
     model.add(klayers.MaxPool1D())
     #model.add(klayers.LSTM(10, dropout=0.25, recurrent_dropout=0.25))
     model.add(klayers.LSTM(50, dropout=0.25, recurrent_dropout=0.25))
@@ -39,26 +40,26 @@ def convNetLSTM(trainFeatures):
     
     return model
 
-def RNNOnly(trainFeatures):
+def RNNOnly(dimFeature):
     
     # RNN model
     model = kmodels.Sequential()
-    model.add(klayers.SimpleRNN(50, input_shape=(1, trainFeatures.shape[2]), dropout=0.2, recurrent_dropout=0.2))
+    model.add(klayers.SimpleRNN(50, input_shape=(1, dimFeature), dropout=0.2, recurrent_dropout=0.2))
     model.add(klayers.Dense(50, activation='relu'))
     model.add(klayers.Dense(1, activation='sigmoid'))
 
     return model
 
-def convNetRNN(trainFeatures):
+def convNetRNN(dimFeature):
     
     # Convnet model
     filters = 16
     kernel_size = 16
     # RNN model
     model = kmodels.Sequential()
-    model.add(klayers.Conv1D(filters=filters, kernel_size=kernel_size, activation='relu', input_shape=(1, trainFeatures.shape[2]), data_format="channels_first"))
+    model.add(klayers.Conv1D(filters=filters, kernel_size=kernel_size, activation='relu', input_shape=(1, dimFeature), data_format="channels_first"))
     model.add(klayers.MaxPool1D())
-    model.add(klayers.SimpleRNN(50, input_shape=(1, trainFeatures.shape[2]), dropout=0.2, recurrent_dropout=0.2))
+    model.add(klayers.SimpleRNN(50, input_shape=(1, dimFeature), dropout=0.2, recurrent_dropout=0.2))
     model.add(klayers.Dense(50, activation='relu'))
     model.add(klayers.Dense(1, activation='sigmoid'))
 

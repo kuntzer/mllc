@@ -27,7 +27,7 @@ def pickleWrite(obj, filepath, protocol=-1):
 
     pickle.dump(obj, pkl_file, protocol)
     pkl_file.close()
-    logger.info("Wrote %s" % filepath)
+    logger.debug("Wrote %s" % filepath)
 
 def pickleRead(filepath):
     """
@@ -44,7 +44,7 @@ def pickleRead(filepath):
     obj = pickle.load(pkl_file)
     pkl_file.close()
     
-    logger.info("Read %s" % filepath)
+    logger.debug("Read %s" % filepath)
     return obj
 
 def loadDataset(category, saveDir="data/"):
@@ -59,29 +59,108 @@ def loadTable(category, saveDir="data/"):
     """
     return astab.Table.read(os.path.join(saveDir, "{}.fits".format(category)))
 
-def saveSets(saveDir, train, valid, tests, overwrite=False):
+def prepare2SaveSets(saveDir, overwrite=False):
+    """
+    Looking at the directory existence. Behaviour according to user's choice
+    """
     
-    # Looking at the directory existence. Behaviour according to user's choice
     if os.path.exists(saveDir):
         if overwrite: 
             shutil.rmtree(saveDir)
         else:
             raise IOError("Directory {} exists already. Choose a different run name".format(saveDir))
-    saveDir = os.path.join(saveDir, "data")
-    os.makedirs(saveDir)
+    dataDir = os.path.join(saveDir, "data")
+    os.makedirs(dataDir)
+    return dataDir
+
+def saveSet(saveDir, dataDir, arr, key, truthTable, preProcessFun=None, allowOrderPerFile=False, maxDataPerFile=1024, **kwargs):
+    """
+    Preprocesses and saves a set. Saves a certain numnber of samples per file. Note that the preprocessing is applied per file.
+    There is no possibility with this function to compute cross-files or cross-set propreties for normalisation  purposes.
     
-    # TODO: replace this. I don't like have to hard-code the different datasets here.
-    sets = {"train": train, "valid":valid, "tests":tests}
+    :param saveDir: where to save the features, labels and truthtables
+    :param dataDir: where are the data files (flux files)
+    :param key: what is the name of the set (e.g. train, valid or test)
+    :param truthTable: the truth table from the data generation
+    :param preProcessFun: function to be applied for the preprocessing
+    :param allowOrderPerFile: if set to True will reorder the dataset per file number. It will require less I/O operation but assume there is no order in the data.
+    :param maxDataPerFile: number of samples per files
     
-    for key in sets.keys():
-        logging.info("Saving {} features and labels to {}".format(key, saveDir))
-        array, label, truthTable = sets[key]
-        logging.info("with {} features and {} samples".format(np.shape(array)[1], np.shape(array)[0]))
+    All remains kwargs are passed to `preProcessFun`
+    """
+    
+    def save2file(saveDir, features, labels, fileId, key, preProcessFun, **kwargs):
+        features = np.array(features).T
+        if not preProcessFun is None:
+            features = preProcessFun(features, **kwargs)
+        pickleWrite(features, os.path.join(saveDir, "{}Features_{:03d}.pkl".format(key, fileId)))
+        pickleWrite(labels, os.path.join(saveDir, "{}Labels_{:03d}.pkl".format(key, fileId)))
+        logger.info("Wrote feature file nb {:03d}".format(fileId))
+    
+    fileId = 0
+
+    if allowOrderPerFile:
+        idSort = np.argsort(arr['idFile'])
+        arr = arr[idSort]
+    
+    loadedFileNb = None
+    labels = []
+    features = []
+    idsPreped = []
+    ids = np.array(arr["id"], dtype=np.int)
+    truthTable_ = truthTable[ids]
+    
+    stepShout = 1.
+    lastShoutOut = -stepShout
+    nSample = 0
+    
+    nsamples = len(arr)
+    for lc in arr:
+        if (nSample + 1)/nsamples * 100 > lastShoutOut + stepShout:
+            shoutOutval = (nSample + 1)/nsamples * 100
+            logger.info("Preprocessing at {:2.0f}% for {}".format(shoutOutval, key))
+            lastShoutOut += stepShout
         
-        array = array.reshape(array.shape[0], 1, array.shape[1])
-        pickleWrite(array, os.path.join(saveDir, "{}Features.pkl".format(key)))
-        pickleWrite(label, os.path.join(saveDir, "{}Labels.pkl".format(key)))
-        truthTable.write(os.path.join(saveDir, "{}TruthTable.fits".format(key)), format='fits') 
+        if not loadedFileNb == lc["idFile"]:
+            loadedFileNb = int(lc["idFile"])
+        
+            loadedFluxes = pickleRead("{}/flux_{:03d}.pkl".format(dataDir, loadedFileNb)).T
+            loadedFluxIds = loadedFluxes[:, 0]
+            loadedFluxes = loadedFluxes[:, 1:]
+
+        if lc["orbitalPeriod"] > 0.:
+            labels.append(1)
+        else:
+            labels.append(0)
+    
+        currentId = int(lc["id"])
+        foundId = np.where(loadedFluxIds == currentId)[0]
+        assert len(foundId) < 2
+        if len(foundId) == 0:
+            raise IndexError("Found no corresponding flux")
+        assert len(foundId) == 1
+        foundId = foundId[0]
+        
+        features.append(list(loadedFluxes[foundId]))
+        idsPreped.append(fileId)
+        
+        #print(np.shape(features))
+    
+        if len(labels) >= maxDataPerFile:
+            save2file(saveDir, features, labels, fileId, key, preProcessFun, **kwargs)
+            fileId += 1
+
+            labels = []
+            features = []
+            
+        nSample += 1
+            
+    if len(labels) > 0:
+        save2file(saveDir, features, labels, fileId, key, preProcessFun, **kwargs)
+    truthTable_["idFileFeatures"] = idsPreped
+    
+    truthTable_.write(os.path.join(saveDir, "{}TruthTable.fits".format(key)), format='fits') 
+    fileId += 1
         
 def saveModel(model, fitHistory, saveDir, name="model"):
     """

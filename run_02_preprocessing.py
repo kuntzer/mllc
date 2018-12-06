@@ -2,70 +2,59 @@ import numpy as np
 import os
 import logging
 from datetime import datetime
-from sklearn.preprocessing import MinMaxScaler
+#from sklearn.preprocessing import MinMaxScaler
 
 import tmllc
+import matplotlib.pyplot as plt
+
+###################################################################################################
+def preprocessNonParametric(data):
+    logging.critical("NORMALIZATION IS CRITICAL!")
+    data -= 1.
+    maxPerSignal = np.amax(data, axis=0)
+    data /= maxPerSignal
+    return data
 
 logging.basicConfig(format='%(asctime)s %(levelname)s: %(name)s(%(funcName)s): %(message)s', level=logging.INFO)
 
-useFakeData = True
 fakeDataDir = "data/fakeWideParams"
 runName = "fakeWideParams"
 saveDir = os.path.join("runs", runName)
+maxDataPerFile = 200
+# This, is set to True, will reorder the dataset per file number. It will require less I/O operation
+# but assume there is no order in the data.
+allowOrderPerFile = False 
+show = False
 
 # Beware the results are not reproducible since we select always a different subset, so let's fix the numpy seed
 np.random.seed(10)
 
+###################################################################################################
+
 timeStart = datetime.now()
 
-if useFakeData:
-    logging.info("Loading fake data...")
-    fluxNone = tmllc.io.pickleRead("{}/fluxNonTransits.pkl".format(fakeDataDir))
-    fluxPlanet = tmllc.io.pickleRead("{}/fluxTransits.pkl".format(fakeDataDir))
-    truthTable = tmllc.io.loadTable("truthTransits", "{}/".format(fakeDataDir))
-else:
-    logging.info("Loading 'real' data...")
-    tics, timestamps, fluxPlanet, _ = tmllc.io.loadDataset("planet")
-    _, _, fluxNone, _ = tmllc.io.loadDataset("none")
-    
-    # Select the same number of planets and nothing LC to avoid biaising the network
-    ids = np.random.choice(np.arange(fluxNone.shape[1]), fluxPlanet.shape[1])
-    fluxNone = fluxNone[:,ids]
-    
-flux = np.hstack([fluxPlanet, fluxNone])
-labels = np.hstack([np.ones(np.shape(fluxPlanet)[1]), np.zeros(np.shape(fluxNone)[1])])
-# Let's free up some memory here
-del fluxPlanet, fluxNone
+logging.info("Loading fake data...")
 
-# Normalise the curves
-print(np.amax(flux))
-print(np.amin(flux))
+truthTable = tmllc.io.loadTable("truthTransits", "{}/".format(fakeDataDir))
+if show:
+    idKeep = truthTable["orbitalPeriod"] > 0.
+    truthTableShow = truthTable[idKeep]
+    for colname in truthTable.colnames:
+        plt.figure()
+        plt.title(colname)
+        plt.hist(truthTableShow[colname], 25)
+    plt.show()
+    del truthTableShow
 
-# TODO: save the scaler also
-# TODO: may be that's not the right way to normalise. 
-# TODO: you should look at whether you should not normalise by sigma noise.
-scaler = MinMaxScaler()
-#TODO:
-#flux = scaler.fit_transform(flux)
-logging.critical("NORMALIZATION IS CRITICAL!")
+# First decide on the order, then we will load the files...
 
-# and preprocess now
-flux -= 1.
-maxPerSignal = np.amax(flux, axis=0)
-print(maxPerSignal.shape)
-print(flux / maxPerSignal)
-flux = flux / maxPerSignal
-print(np.amax(flux, axis=0))
-#exit()
-#flux *= -1e2
-#flux /= np.nanmedian(flux, axis=0)
-print(np.amax(flux))
-print(np.amin(flux))
-
-sets = flux.T, labels, truthTable
-
+sets = [truthTable]
 train, valid, tests = tmllc.data.generateSets(sets, trainingSetFrac=0.8, validationSetFrac=0.2)
+names = ["train", "valid", "tests"]
+saveDir = tmllc.io.prepare2SaveSets(saveDir=saveDir, overwrite=True)
 
-tmllc.io.saveSets(saveDir, train, valid, tests, overwrite=True)
+for arr, key in zip([train, valid, tests], names):
+    arr = arr[0]
+    tmllc.io.saveSet(saveDir, dataDir=fakeDataDir, arr=arr, key=key, truthTable=truthTable, preProcessFun=preprocessNonParametric, allowOrderPerFile=allowOrderPerFile, maxDataPerFile=maxDataPerFile)
 
 logging.info("Pre-processed training data in {}".format(datetime.now()-timeStart))

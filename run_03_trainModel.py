@@ -2,9 +2,9 @@ from datetime import datetime
 import os
 import logging
 import numpy as np
+import glob
 
 import tmllc
-
 import models
 
 logging.basicConfig(format='%(asctime)s %(levelname)s: %(name)s(%(funcName)s): %(message)s', level=logging.INFO)
@@ -17,19 +17,13 @@ np.random.seed(10)
 
 timeStart = datetime.now()
 
-trainFeatures = tmllc.io.loadDataset("trainFeatures", os.path.join(saveDir, "data"))
-trainLabels = tmllc.io.loadDataset("trainLabels", os.path.join(saveDir, "data"))
-validFeatures = tmllc.io.loadDataset("validFeatures", os.path.join(saveDir, "data"))
-validLabels = tmllc.io.loadDataset("validLabels", os.path.join(saveDir, "data"))
-
-#Tensorflow uses [samples][height][width][channels] order, while Theano is in reverse order.
-
-#trainFeatures = np.reshape(trainFeatures, (3200, 1000)).T
-print(trainFeatures.shape)
-
+# Let's get the size of the feature by randomly loading one.
+FeaturesFiles = glob.glob(os.path.join(saveDir, "data", "trainFeatures_*.pkl"))
+dimFeature = tmllc.io.pickleRead(FeaturesFiles[0])
+dimFeature = np.shape(dimFeature)[0]
 
 # Let's define the model, the input shape is directly derived from the trainFeatures
-modelFct = models.convNetLSTM
+modelFct = models.RNNOnly
 modelName = modelFct.__name__
 logging.info("Model name is selected to be: {}".format(modelName))
 modelDir = os.path.join("runs", runName, modelName)
@@ -37,13 +31,16 @@ if os.path.exists(modelDir):
     raise IOError("Model name {} exists ({})".format(modelName, modelDir))
 else:
     os.makedirs(modelDir)
-model = modelFct(trainFeatures)
+model = modelFct(dimFeature)
 
 model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
 print(model.summary())
+print("*" * 50)
+fitHistory = model.fit_generator(generator=tmllc.data.DataFromFile(os.path.join(saveDir, "data"), dataset="train", batchSize=64),
+            epochs=4,
+            validation_data=tmllc.data.DataFromFile(os.path.join(saveDir, "data"), dataset="valid", batchSize=None)
+            )
 
-batch_size = 128
-fitHistory = model.fit(trainFeatures, trainLabels, validation_data=(validFeatures, validLabels), epochs=7, batch_size=batch_size)
 
 logging.info("Training the model took {}".format(datetime.now()-timeStart))
 
